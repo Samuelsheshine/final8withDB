@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Check, Edit2, RotateCw, X, BookOpen, ArrowLeft, Sparkles, Clock, Calendar, Calculator, Trash2, Send, Link as LinkIcon, ExternalLink, BarChart2, Cloud, Settings, PieChart, Globe } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Check, Edit2, RotateCw, X, BookOpen, ArrowLeft, Sparkles, Clock, Calendar, Calculator, Trash2, Send, Link as LinkIcon, ExternalLink, BarChart2, Cloud, Settings, PieChart, Globe, Save } from 'lucide-react';
 
 // --- 多語言翻譯字典 ---
 const TRANSLATIONS = {
@@ -46,13 +46,18 @@ const TRANSLATIONS = {
 
     // 聯絡簿
     no_tasks: '無待辦',
+    no_tasks_today: '今日無行程',
     completed: '完成',
     confirm_delete_task: '確定要刪除「{subject}」嗎？',
     subject_placeholder: '科目...',
     note_placeholder: '備註...',
-    categories: {
-      exam: '考試', report: '報告', homework: '作業', cancel: '停課', other: '其他'
-    },
+    
+    // Categories (Flattened)
+    'categories.exam': '考試',
+    'categories.report': '報告',
+    'categories.homework': '作業',
+    'categories.cancel': '停課',
+    'categories.other': '其他',
 
     // 課表
     period: '節',
@@ -83,7 +88,7 @@ const TRANSLATIONS = {
     calc_semester_score: '計算學期成績',
     
     // 成績計算機
-    score_calculator: '學期成績計算機',
+    score_calculator: '學期成績計算',
     item_placeholder: '項目 (如: 期中考)',
     weight_placeholder: '30',
     score_placeholder: '得分',
@@ -92,6 +97,8 @@ const TRANSLATIONS = {
     not_100: '(未滿100%)',
     estimated_score: '預估學期成績',
     save_and_apply: '儲存並應用',
+    save_criteria: '儲存評分標準',
+    click_to_calc: '點擊以計算',
 
     // 番茄鐘
     focus_mode: '專注模式',
@@ -171,13 +178,18 @@ const TRANSLATIONS = {
     user_role: 'Student Account',
 
     no_tasks: 'No Tasks',
+    no_tasks_today: 'No schedule today',
     completed: 'Done',
     confirm_delete_task: 'Delete "{subject}"?',
     subject_placeholder: 'Subject...',
     note_placeholder: 'Note...',
-    categories: {
-      exam: 'Exam', report: 'Report', homework: 'HW', cancel: 'Cancel', other: 'Other'
-    },
+    
+    // Categories
+    'categories.exam': 'Exam',
+    'categories.report': 'Report',
+    'categories.homework': 'HW',
+    'categories.cancel': 'Cancel',
+    'categories.other': 'Other',
 
     period: 'Prd',
     time: 'Time',
@@ -214,6 +226,8 @@ const TRANSLATIONS = {
     not_100: '(< 100%)',
     estimated_score: 'Est. Score',
     save_and_apply: 'Save & Apply',
+    save_criteria: 'Save Criteria',
+    click_to_calc: 'Click to Calc',
 
     focus_mode: 'Focus Mode',
     break_mode: 'Break Mode',
@@ -290,13 +304,18 @@ const TRANSLATIONS = {
     user_role: 'Student Account',
 
     no_tasks: 'なし',
+    no_tasks_today: '今日の予定はありません',
     completed: '完了',
     confirm_delete_task: '「{subject}」を削除しますか？',
     subject_placeholder: '科目...',
     note_placeholder: 'メモ...',
-    categories: {
-      exam: '試験', report: 'レポート', homework: '宿題', cancel: '休講', other: 'その他'
-    },
+    
+    // Categories
+    'categories.exam': '試験',
+    'categories.report': 'レポート',
+    'categories.homework': '宿題',
+    'categories.cancel': '休講',
+    'categories.other': 'その他',
 
     period: '限',
     time: '時間',
@@ -333,6 +352,8 @@ const TRANSLATIONS = {
     not_100: '(100%未満)',
     estimated_score: '予想成績',
     save_and_apply: '保存して適用',
+    save_criteria: '基準を保存',
+    click_to_calc: 'クリックして計算',
 
     focus_mode: '集中モード',
     break_mode: '休憩モード',
@@ -1215,26 +1236,6 @@ export default function StudyHubApp() {
   };
 
   const GpaView = ({ gpaCourses, setGpaCourses, courseCriteria, setCourseCriteria }) => {
-      const getCourseScore = (course) => {
-          if (course.score && !isNaN(parseFloat(course.score))) return course.score;
-          
-          const criteria = courseCriteria[course.name];
-          if (criteria && criteria.length > 0) {
-              let total = 0;
-              let currentPercentage = 0;
-              criteria.forEach(c => {
-                  const weight = parseFloat(c.weight);
-                  const score = parseFloat(c.score);
-                  if (!isNaN(weight) && !isNaN(score)) {
-                      total += score * (weight / 100);
-                      currentPercentage += weight;
-                  }
-              });
-              return total.toFixed(1); 
-          }
-          return "-";
-      };
-
       const calculatedGPA = useMemo(() => {
           let totalPoints = 0; let totalCredits = 0;
           gpaCourses.forEach(c => { 
@@ -1479,24 +1480,83 @@ export default function StudyHubApp() {
       );
   };
 
-  const GradesView = ({ grades, setGrades }) => {
-    const [viewMode, setViewMode] = useState('all'); 
+  const GradesView = ({ grades, setGrades, courseCriteria, setCourseCriteria }) => {
+    const [viewMode, setViewMode] = useState('all'); // all, subjects, calculator
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
     const [newGradeEntry, setNewGradeEntry] = useState({ date: getLocalDateString(new Date()), subject: '', score: '', note: '' });
+    
+    // --- 成績計算機 State ---
+    const [isCalcOpen, setIsCalcOpen] = useState(false);
+    const [localCriteria, setLocalCriteria] = useState([]);
+    const [currentCalcSubject, setCurrentCalcSubject] = useState(null); // 用於計算機模式
+
     const uniqueSubjects = useMemo(() => [...new Set(grades.map(g => g.subject))], [grades]);
     const saveNewGrade = () => { if (!newGradeEntry.subject) return; setGrades([...grades, { id: Date.now(), ...newGradeEntry }]); setIsAdding(false); };
+
+    // --- 計算機相關函式 ---
+    const openCalculator = (subject) => {
+        setCurrentCalcSubject(subject);
+        setLocalCriteria(courseCriteria[subject] || []);
+        setIsCalcOpen(true);
+    };
+
+    const addCriteriaItem = () => {
+        setLocalCriteria([...localCriteria, { id: Date.now(), name: '', weight: '', score: '' }]);
+    };
+
+    const updateCriteriaItem = (id, field, value) => {
+        setLocalCriteria(localCriteria.map(c => c.id === id ? { ...c, [field]: value } : c));
+    };
+
+    const removeCriteriaItem = (id) => {
+        setLocalCriteria(localCriteria.filter(c => c.id !== id));
+    };
+
+    const saveCalculator = () => {
+        setCourseCriteria(prev => ({
+            ...prev,
+            [currentCalcSubject]: localCriteria
+        }));
+        setIsCalcOpen(false);
+    };
+
+    const currentTotalScore = useMemo(() => {
+        let total = 0;
+        localCriteria.forEach(c => {
+            const w = parseFloat(c.weight) || 0;
+            const s = parseFloat(c.score) || 0;
+            total += s * (w / 100);
+        });
+        return total.toFixed(1);
+    }, [localCriteria]);
+
+    const currentTotalWeight = useMemo(() => {
+        let total = 0;
+        localCriteria.forEach(c => total += (parseFloat(c.weight) || 0));
+        return total;
+    }, [localCriteria]);
 
     return (
       <div className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-6">
             <div className="flex bg-gray-100 p-1 rounded-xl">
-                {['all:all_records', 'subjects:subject_categories'].map(m => {
+                {['all:all_records', 'subjects:subject_categories', 'calculator:score_calculator'].map(m => {
                     const [mode, label] = m.split(':');
-                    return ( <button key={mode} onClick={() => { setViewMode(mode); setSelectedSubject(null); }} className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === mode || (mode==='subjects' && viewMode==='subject-detail') ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}>{t(label)}</button> )
+                    return ( 
+                        <button 
+                            key={mode} 
+                            onClick={() => { setViewMode(mode); setSelectedSubject(null); }} 
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === mode || (mode==='subjects' && viewMode==='subject-detail') ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            {t(label)}
+                        </button> 
+                    )
                 })}
             </div>
-            <button onClick={()=>setIsAdding(true)} className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 flex items-center gap-2 transition-colors"><Plus size={16} /> {t('add_grade')}</button>
+            {viewMode !== 'calculator' && (
+                <button onClick={()=>setIsAdding(true)} className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 flex items-center gap-2 transition-colors"><Plus size={16} /> {t('add_grade')}</button>
+            )}
         </div>
         
         <div className="flex-1 overflow-y-auto pr-2">
@@ -1528,12 +1588,53 @@ export default function StudyHubApp() {
                     </div>
                 ))}</div>
             )}
+            
+            {/* 新增的計算機視圖模式 */}
+            {viewMode === 'calculator' && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {uniqueSubjects.map(subject => {
+                        // 計算目前的預估成績以顯示在卡片上
+                        const criteria = courseCriteria[subject] || [];
+                        let previewScore = 0;
+                        let hasCriteria = criteria.length > 0;
+                        if (hasCriteria) {
+                            criteria.forEach(c => {
+                                const w = parseFloat(c.weight) || 0;
+                                const s = parseFloat(c.score) || 0;
+                                previewScore += s * (w / 100);
+                            });
+                        }
+
+                        return (
+                            <div key={subject} onClick={() => openCalculator(subject)} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><PieChart size={24} /></div>
+                                    {hasCriteria && <span className="text-2xl font-black text-indigo-600">{previewScore.toFixed(0)}</span>}
+                                </div>
+                                <h4 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1">{subject}</h4>
+                                <span className="text-xs font-bold text-gray-400 flex items-center gap-1 group-hover:text-indigo-500 transition-colors">
+                                    {t('click_to_calc')} <ChevronRight size={12}/>
+                                </span>
+                            </div>
+                        );
+                    })}
+                    {uniqueSubjects.length === 0 && (
+                        <div className="col-span-full text-center py-12 text-gray-400 text-sm">
+                            {t('no_tasks')} (請先新增成績紀錄)
+                        </div>
+                    )}
+                </div>
+            )}
+
             {viewMode === 'subject-detail' && selectedSubject && (
                 <div className="space-y-4 max-w-2xl mx-auto">
-                    <div className="flex items-center gap-4 mb-4 border-b border-gray-100 pb-4">
-                        <button onClick={() => setViewMode('subjects')} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors"><ArrowLeft size={20} /></button>
-                        <h2 className="text-2xl font-bold text-gray-800">{selectedSubject}</h2>
+                    <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setViewMode('subjects')} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors"><ArrowLeft size={20} /></button>
+                            <h2 className="text-2xl font-bold text-gray-800">{selectedSubject}</h2>
+                        </div>
                     </div>
+
                     {grades.filter(g => g.subject === selectedSubject).map(grade => (
                         <div key={grade.id} className="bg-white border-l-4 border-blue-500 shadow-sm rounded-r-xl p-5 flex justify-between items-center">
                             <div><span className="text-xs text-gray-400 font-mono block mb-1">{grade.date}</span><span className="text-base font-bold text-gray-800">{grade.note}</span></div>
@@ -1560,9 +1661,76 @@ export default function StudyHubApp() {
                 </div>
             </div>
         )}
+
+        {/* 成績計算機 Modal */}
+        {isCalcOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
+                <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl flex flex-col h-[500px]">
+                    <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                        <div>
+                            <h3 className="font-bold text-lg text-gray-800">{currentCalcSubject}</h3>
+                            <span className="text-xs text-gray-500">{t('score_calculator')}</span>
+                        </div>
+                        <button onClick={() => setIsCalcOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto mb-4 pr-1">
+                        <div className="space-y-3">
+                            {localCriteria.map((item, idx) => (
+                                <div key={item.id} className="flex gap-2 items-center">
+                                    <input 
+                                        className="flex-1 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-500" 
+                                        placeholder={t('item_placeholder')}
+                                        value={item.name}
+                                        onChange={(e) => updateCriteriaItem(item.id, 'name', e.target.value)}
+                                    />
+                                    <div className="relative w-20">
+                                        <input 
+                                            className="w-full border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 pr-5" 
+                                            placeholder={t('weight_placeholder')}
+                                            type="number"
+                                            value={item.weight}
+                                            onChange={(e) => updateCriteriaItem(item.id, 'weight', e.target.value)}
+                                        />
+                                        <span className="absolute right-2 top-2 text-xs text-gray-400">%</span>
+                                    </div>
+                                    <input 
+                                        className="w-20 border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 font-bold text-blue-600" 
+                                        placeholder={t('score_placeholder')}
+                                        type="number"
+                                        value={item.score}
+                                        onChange={(e) => updateCriteriaItem(item.id, 'score', e.target.value)}
+                                    />
+                                    <button onClick={() => removeCriteriaItem(item.id)} className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>
+                                </div>
+                            ))}
+                            <button onClick={addCriteriaItem} className="w-full border border-dashed border-gray-300 py-2.5 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all">{t('add_criteria_item')}</button>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-4 mt-auto">
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="text-xs text-gray-500">
+                                {t('total_weight')}: <span className={currentTotalWeight !== 100 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{currentTotalWeight}%</span>
+                                {currentTotalWeight !== 100 && ` ${t('not_100')}`}
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs text-gray-500 block">{t('estimated_score')}</span>
+                                <span className="text-3xl font-black text-blue-600">{currentTotalScore}</span>
+                            </div>
+                        </div>
+                        <button onClick={saveCalculator} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">
+                            <Save size={16}/> {t('save_criteria')}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
       </div>
     );
   };
+
+  // --- Missing Components Restoration: DashboardView & PlannerView ---
 
   const DashboardView = ({ tasks, currentDate, setCurrentDate }) => (
       <div className="h-full flex flex-col md:flex-row gap-8">
@@ -1701,7 +1869,7 @@ export default function StudyHubApp() {
                 <>
                   {activeTab === 'dashboard' && <DashboardView tasks={tasks} currentDate={currentDate} setCurrentDate={setCurrentDate} />}
                   {activeTab === 'planner' && <PlannerView tasks={tasks} setTasks={setTasks} weekDays={weekDays} />}
-                  {activeTab === 'grades' && <GradesView grades={grades} setGrades={setGrades} />}
+                  {activeTab === 'grades' && <GradesView grades={grades} setGrades={setGrades} courseCriteria={courseCriteria} setCourseCriteria={setCourseCriteria} />}
                   {activeTab === 'gpa' && <GpaView gpaCourses={gpaCourses} setGpaCourses={setGpaCourses} courseCriteria={courseCriteria} setCourseCriteria={setCourseCriteria} />}
                   {activeTab === 'timetable' && <TimetableView timetable={timetable} setTimetable={setTimetable} periodTimes={periodTimes} setPeriodTimes={setPeriodTimes} />}
                   {activeTab === 'pomodoro' && <PomodoroView studyLogs={studyLogs} setStudyLogs={setStudyLogs} currentDate={currentDate} pomodoroSubjects={pomodoroSubjects} setPomodoroSubjects={setPomodoroSubjects} />}
