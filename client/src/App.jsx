@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Check, Edit2, RotateCw, X, BookOpen, ArrowLeft, Sparkles, Clock, Calendar, Calculator, Trash2, Send, Link as LinkIcon, ExternalLink, BarChart2, Cloud, Settings, PieChart, Globe, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Check, Edit2, RotateCw, X, BookOpen, ArrowLeft, Sparkles, Clock, Calendar, Calculator, Trash2, Send, Link as LinkIcon, ExternalLink, BarChart2, Cloud, Settings, PieChart, Globe, Save, AlertCircle, History, Archive } from 'lucide-react';
 
 // --- 多語言翻譯字典 ---
 const TRANSLATIONS = {
@@ -22,6 +22,8 @@ const TRANSLATIONS = {
     week_prefix: '第', week_suffix: '週',
     semester_week: '學期第',
     pre_semester: '開學前',
+    semester_ended: '學期已結束',
+    archived_msg: '已自動歸檔上學期成績',
     
     // 設定
     settings: '設定',
@@ -35,8 +37,8 @@ const TRANSLATIONS = {
     // 側邊欄 & 功能標題
     timetable: '課表',
     planner: '聯絡簿',
-    grades: '成績',
-    gpa: 'GPA',
+    grades: '成績紀錄',
+    gpa: '課程 & GPA',
     dashboard: '行事曆',
     ai_assistant: 'AI 助理',
     pomodoro: '番茄鐘',
@@ -52,7 +54,7 @@ const TRANSLATIONS = {
     subject_placeholder: '科目...',
     note_placeholder: '備註...',
     
-    // Categories (Flattened)
+    // Categories
     'categories.exam': '考試',
     'categories.report': '報告',
     'categories.homework': '作業',
@@ -70,35 +72,40 @@ const TRANSLATIONS = {
     setting_hint: '設定',
 
     // 成績 & GPA
-    all_records: '所有紀錄',
+    all_records: '本週紀錄',
     subject_categories: '科目分類',
+    gpa_history: 'GPA 紀錄',
     add_grade: '新增紀錄',
     add_course: '新增課程',
     course_name: '科目名稱',
     credit: '學分',
-    score: '分數',
+    score: '學期成績',
     gpa_score: 'GPA',
-    action: '操作',
+    action: '評分項目',
     grade_note_placeholder: '備註 (例如：期中考)',
     grade_note_optional: '備註 (選填)',
     total_courses: '總課程數',
     current_gpa: '目前 GPA (4.3)',
-    records_count: '{count} 筆紀錄',
+    records_count: '{count} 筆細項',
     no_note: '無備註',
-    calc_semester_score: '計算學期成績',
+    calc_semester_score: '管理評分細項',
+    select_semester: '選擇學期',
+    no_archived_data: '尚無歷史紀錄',
     
     // 成績計算機
-    score_calculator: '學期成績計算',
+    score_calculator: '評分細項管理',
     item_placeholder: '項目 (如: 期中考)',
     weight_placeholder: '30',
     score_placeholder: '得分',
+    date_placeholder: '日期',
     add_criteria_item: '+ 新增評分項目',
     total_weight: '總權重',
     not_100: '(未滿100%)',
-    estimated_score: '預估學期成績',
-    save_and_apply: '儲存並應用',
+    estimated_score: '計算後總成績',
+    save_and_apply: '儲存並更新課程成績',
     save_criteria: '儲存評分標準',
-    click_to_calc: '點擊以計算',
+    click_to_calc: '點擊管理細項',
+    no_criteria_records: '本週無成績紀錄',
 
     // 番茄鐘
     focus_mode: '專注模式',
@@ -157,6 +164,8 @@ const TRANSLATIONS = {
     week_prefix: 'Week ', week_suffix: '',
     semester_week: 'Sem. Week ',
     pre_semester: 'Pre-semester',
+    semester_ended: 'Semester Ended',
+    archived_msg: 'Archived previous semester',
     
     settings: 'Settings',
     semester_settings: 'Semester Settings',
@@ -169,7 +178,7 @@ const TRANSLATIONS = {
     timetable: 'Timetable',
     planner: 'Planner',
     grades: 'Grades',
-    gpa: 'GPA',
+    gpa: 'Courses & GPA',
     dashboard: 'Dashboard',
     ai_assistant: 'AI Assistant',
     pomodoro: 'Pomodoro',
@@ -200,34 +209,39 @@ const TRANSLATIONS = {
     course_name_placeholder: 'Course Name...',
     setting_hint: 'Set',
 
-    all_records: 'All Records',
+    all_records: 'Weekly Log',
     subject_categories: 'By Subject',
+    gpa_history: 'GPA Records',
     add_grade: 'Add Grade',
     add_course: 'Add Course',
     course_name: 'Course Name',
     credit: 'Credit',
-    score: 'Score',
+    score: 'Sem. Score',
     gpa_score: 'GPA',
-    action: 'Action',
+    action: 'Items',
     grade_note_placeholder: 'Note (e.g., Midterm)',
     grade_note_optional: 'Note (Optional)',
     total_courses: 'Total Courses',
     current_gpa: 'Current GPA (4.3)',
-    records_count: '{count} records',
+    records_count: '{count} items',
     no_note: 'No note',
-    calc_semester_score: 'Calc. Semester Score',
+    calc_semester_score: 'Manage Items',
+    select_semester: 'Select Semester',
+    no_archived_data: 'No history',
 
-    score_calculator: 'Score Calculator',
+    score_calculator: 'Grading Items',
     item_placeholder: 'Item (e.g., Midterm)',
     weight_placeholder: '30',
     score_placeholder: 'Score',
+    date_placeholder: 'Date',
     add_criteria_item: '+ Add Item',
     total_weight: 'Total Weight',
     not_100: '(< 100%)',
-    estimated_score: 'Est. Score',
-    save_and_apply: 'Save & Apply',
+    estimated_score: 'Calc. Score',
+    save_and_apply: 'Save & Update',
     save_criteria: 'Save Criteria',
-    click_to_calc: 'Click to Calc',
+    click_to_calc: 'Manage Items',
+    no_criteria_records: 'No records this week',
 
     focus_mode: 'Focus Mode',
     break_mode: 'Break Mode',
@@ -283,6 +297,8 @@ const TRANSLATIONS = {
     week_prefix: '第', week_suffix: '週',
     semester_week: '学期第',
     pre_semester: '学期前',
+    semester_ended: '学期終了',
+    archived_msg: '前学期の成績を保存しました',
     
     settings: '設定',
     semester_settings: '学期設定',
@@ -294,8 +310,8 @@ const TRANSLATIONS = {
 
     timetable: '時間割',
     planner: '連絡帳',
-    grades: '成績',
-    gpa: 'GPA',
+    grades: '成績記録',
+    gpa: '履修 & GPA',
     dashboard: 'カレンダー',
     ai_assistant: 'AI アシスタント',
     pomodoro: 'ポモドーロ',
@@ -326,34 +342,39 @@ const TRANSLATIONS = {
     course_name_placeholder: '科目名を入力...',
     setting_hint: '設定',
 
-    all_records: '全記録',
+    all_records: '今週の記録',
     subject_categories: '科目別',
+    gpa_history: 'GPA 履歴',
     add_grade: '記録追加',
     add_course: '科目追加',
     course_name: '科目名',
     credit: '単位',
-    score: '点数',
+    score: '学期成績',
     gpa_score: 'GPA',
-    action: '操作',
+    action: '詳細項目',
     grade_note_placeholder: 'メモ (例: 中間テスト)',
     grade_note_optional: 'メモ (任意)',
     total_courses: '科目数',
     current_gpa: '現在 GPA (4.3)',
-    records_count: '{count} 件',
+    records_count: '{count} 項目',
     no_note: 'メモなし',
-    calc_semester_score: '学期成績計算',
+    calc_semester_score: '項目管理',
+    select_semester: '学期を選択',
+    no_archived_data: '履歴なし',
 
-    score_calculator: '成績計算機',
+    score_calculator: '評価項目管理',
     item_placeholder: '項目 (例: 中間)',
     weight_placeholder: '30',
     score_placeholder: '点数',
-    add_criteria_item: '+ 評価項目を追加',
+    date_placeholder: '日付',
+    add_criteria_item: '+ 項目を追加',
     total_weight: '総比重',
     not_100: '(100%未満)',
-    estimated_score: '予想成績',
-    save_and_apply: '保存して適用',
+    estimated_score: '計算成績',
+    save_and_apply: '保存して更新',
     save_criteria: '基準を保存',
-    click_to_calc: 'クリックして計算',
+    click_to_calc: '詳細を管理',
+    no_criteria_records: '今週の成績記録はありません',
 
     focus_mode: '集中モード',
     break_mode: '休憩モード',
@@ -427,10 +448,28 @@ const getLocalDateString = (date) => {
     return `${year}-${month}-${day}`;
 };
 
+// 輔助函式：依據民國年與月份計算學期名稱
+const getSemesterName = (date) => {
+    const year = date.getFullYear();
+    const rocYear = year - 1911;
+    const month = date.getMonth(); // 0-11
+
+    // 8 (Sept) to 0 (Jan) -> Fall Semester of (ROC-1)
+    if (month >= 8) { // 9月-12月
+        return `${rocYear - 1} 上學期`; 
+    } else if (month === 0) { // 1月
+        return `${rocYear - 2} 上學期`; // 跨年了，所以減2才對回到該學年
+    } else if (month >= 1 && month <= 6) { // 2月-7月
+        return `${rocYear - 2} 下學期`;
+    } else { // 8月 (暑假/開學前)
+        return `${rocYear - 1} 上學期`; // 視為新學期開始
+    }
+};
+
 export default function StudyHubApp() {
   const [activeTab, setActiveTab] = useState('timetable'); 
   const [currentDate, setCurrentDate] = useState(new Date()); 
-  const [language, setLanguage] = useState('zh-TW'); // 預設語言
+  const [language, setLanguage] = useState('zh-TW'); 
   
   const t = (key, params = {}) => {
     let text = TRANSLATIONS[language][key] || key;
@@ -441,8 +480,8 @@ export default function StudyHubApp() {
   };
 
   // 學期設定
-  const [semesterStart, setSemesterStart] = useState(new Date(new Date().getFullYear(), 8, 1)); // 預設 9/1
-  const [semesterWeeks, setSemesterWeeks] = useState(18); // 預設 18 週，可改為 16
+  const [semesterStart, setSemesterStart] = useState(new Date(new Date().getFullYear(), 8, 1)); 
+  const [semesterWeeks, setSemesterWeeks] = useState(18); 
   
   // --- 資料庫同步狀態 ---
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -454,9 +493,7 @@ export default function StudyHubApp() {
     { id: 1, date: getLocalDateString(new Date()), category: 'exam', subject: 'Calculus Example', note: 'Ch1-3', completed: false },
   ]);
 
-  const [grades, setGrades] = useState([
-    { id: 1, date: getLocalDateString(new Date()), subject: 'Intro to CS Example', score: '85', note: 'Midterm' },
-  ]);
+  const [grades, setGrades] = useState([]); 
 
   const [timetable, setTimetable] = useState({
       "1-1": "Calculus", "1-2": "Calculus",
@@ -474,6 +511,9 @@ export default function StudyHubApp() {
   const [studyLogs, setStudyLogs] = useState([]);
   const [pomodoroSubjects, setPomodoroSubjects] = useState([]);
   const [courseCriteria, setCourseCriteria] = useState({});
+  
+  // 新增：歷史學期存檔
+  const [archivedSemesters, setArchivedSemesters] = useState([]);
 
   // --- 資料庫整合邏輯 ---
 
@@ -496,7 +536,8 @@ export default function StudyHubApp() {
             if (data.semesterStart) setSemesterStart(new Date(data.semesterStart));
             if (data.semesterWeeks) setSemesterWeeks(data.semesterWeeks);
             if (data.courseCriteria) setCourseCriteria(data.courseCriteria);
-            if (data.language) setLanguage(data.language); // 讀取語言設定
+            if (data.language) setLanguage(data.language); 
+            if (data.archivedSemesters) setArchivedSemesters(data.archivedSemesters);
           }
         }
       } catch (error) {
@@ -507,6 +548,33 @@ export default function StudyHubApp() {
     };
     fetchData();
   }, []);
+
+  // --- 初始化範例資料邏輯 ---
+  useEffect(() => {
+    if (!isDataLoaded) return;
+
+    // 檢查是否已有 112-2 下學期的範例資料，若無則加入
+    const exampleSemesterName = "112 下學期";
+    const hasExample = archivedSemesters.some(s => s.name === exampleSemesterName);
+
+    if (!hasExample) {
+        const exampleArchive = {
+            id: Date.now() + 999, // 避免 ID 衝突
+            name: exampleSemesterName,
+            courses: [
+                { id: 2001, name: "微積分(二)", credit: "3", score: "88" },
+                { id: 2002, name: "普通物理", credit: "3", score: "92" },
+                { id: 2003, name: "程式設計", credit: "3", score: "95" },
+                { id: 2004, name: "體育", credit: "0", score: "85" }, // 0 學分不計入 GPA
+                { id: 2005, name: "國文", credit: "2", score: "82" }
+            ],
+            // 預設空的評分標準，但允許使用者點擊編輯後新增
+            criteria: {},
+            archivedDate: new Date().toISOString()
+        };
+        setArchivedSemesters(prev => [...prev, exampleArchive]);
+    }
+  }, [isDataLoaded]);
 
   useEffect(() => {
     if (!isDataLoaded) return;
@@ -523,7 +591,8 @@ export default function StudyHubApp() {
           semesterStart: semesterStart.toISOString(),
           semesterWeeks,
           courseCriteria,
-          language // 儲存語言設定
+          language,
+          archivedSemesters
         };
         
         localStorage.setItem('studyhub_data', JSON.stringify(payload));
@@ -536,7 +605,7 @@ export default function StudyHubApp() {
     }, 1000);
 
     return () => clearTimeout(saveTimeoutRef.current);
-  }, [tasks, grades, timetable, periodTimes, gpaCourses, links, studyLogs, pomodoroSubjects, currentDate, semesterStart, semesterWeeks, courseCriteria, language, isDataLoaded]);
+  }, [tasks, grades, timetable, periodTimes, gpaCourses, links, studyLogs, pomodoroSubjects, currentDate, semesterStart, semesterWeeks, courseCriteria, language, archivedSemesters, isDataLoaded]);
 
 
   // --- 輔助函式 ---
@@ -565,6 +634,37 @@ export default function StudyHubApp() {
   const weekDays = useMemo(() => getWeekDays(currentDate), [currentDate]);
   const currentWeekNum = getWeekNumber(currentDate);
 
+  // --- 自動歸檔邏輯 ---
+  useEffect(() => {
+      if (!isDataLoaded) return;
+
+      // 檢查是否超過學期週數
+      if (currentWeekNum > semesterWeeks && gpaCourses.length > 0) {
+          const semesterName = getSemesterName(semesterStart);
+          
+          // 檢查是否已經歸檔過該學期名稱
+          const isArchived = archivedSemesters.some(s => s.name === semesterName);
+          
+          if (!isArchived) {
+              // 執行歸檔
+              const newArchive = {
+                  id: Date.now(),
+                  name: semesterName,
+                  courses: gpaCourses,
+                  criteria: courseCriteria,
+                  archivedDate: new Date().toISOString()
+              };
+              
+              setArchivedSemesters(prev => [...prev, newArchive]);
+              setGpaCourses([]); // 清空當前
+              setCourseCriteria({}); // 清空細項
+              
+              alert(`${t('semester_ended')}: ${semesterName}\n${t('archived_msg')}`);
+          }
+      }
+  }, [currentWeekNum, semesterWeeks, gpaCourses, courseCriteria, archivedSemesters, semesterStart, isDataLoaded]);
+
+
   // --- 新版網頁介面元件 ---
 
   const Sidebar = () => (
@@ -582,8 +682,8 @@ export default function StudyHubApp() {
         {[
             { id: 'timetable', label: t('timetable'), icon: <RotateCw size={18}/> },
             { id: 'planner', label: t('planner'), icon: <BookOpen size={18}/> },
-            { id: 'grades', label: t('grades'), icon: <Edit2 size={18}/> },
             { id: 'gpa', label: t('gpa'), icon: <Calculator size={18}/> },
+            { id: 'grades', label: t('grades'), icon: <Edit2 size={18}/> }, // 調整順序
             { id: 'dashboard', label: t('dashboard'), icon: <Calendar size={18}/> },
             { id: 'ai', label: t('ai_assistant'), icon: <Sparkles size={18}/>, special: true },
             { id: 'pomodoro', label: t('pomodoro'), icon: <Clock size={18}/> },
@@ -631,15 +731,12 @@ export default function StudyHubApp() {
         setIsSettingsOpen(false);
     };
 
-    // 依據語言設定格式化日期
     const todayDateString = new Intl.DateTimeFormat(language === 'en' ? 'en-US' : (language === 'ja' ? 'ja-JP' : 'zh-TW'), {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         weekday: 'long'
     }).format(new Date());
-
-    const weekKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
     return (
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10 sticky top-0">
@@ -653,21 +750,38 @@ export default function StudyHubApp() {
                 <ChevronLeft size={16} />
                 </button>
                 
-                <div className="flex flex-col items-center px-3 min-w-[120px]">
-                <span className="text-xs font-bold text-gray-800">
-                    {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} - {weekDays[6].getMonth()+1}/{weekDays[6].getDate()}
-                </span>
-                
-                {currentWeekNum <= 0 && (
-                    <span className="text-[10px] font-bold px-2 rounded-full mt-0.5 bg-gray-50 text-gray-500">
-                        {t('pre_semester')}
+                <div className="flex flex-col items-center px-3 min-w-[120px] relative group">
+                    <input 
+                        type="date" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        value={getLocalDateString(currentDate)}
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                const parts = e.target.value.split('-');
+                                const newDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                setCurrentDate(newDate);
+                            }
+                        }}
+                        title="點擊選擇日期"
+                    />
+                    <span className="text-xs font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                        {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} - {weekDays[6].getMonth()+1}/{weekDays[6].getDate()}
                     </span>
-                )}
-                {currentWeekNum > 0 && currentWeekNum <= semesterWeeks && (
-                    <span className="text-[10px] font-bold px-2 rounded-full mt-0.5 bg-blue-50 text-blue-600">
-                        {t('semester_week')} {currentWeekNum} {t('week_suffix')}
-                    </span>
-                )}
+                    
+                    {currentWeekNum <= 0 && (
+                        <span className="text-[10px] font-bold px-2 rounded-full mt-0.5 bg-gray-50 text-gray-500">
+                            {t('pre_semester')}
+                        </span>
+                    )}
+                    {currentWeekNum > 0 && currentWeekNum <= semesterWeeks ? (
+                        <span className="text-[10px] font-bold px-2 rounded-full mt-0.5 bg-blue-50 text-blue-600">
+                            {t('semester_week')} {currentWeekNum} {t('week_suffix')}
+                        </span>
+                    ) : currentWeekNum > semesterWeeks && (
+                        <span className="text-[10px] font-bold px-2 rounded-full mt-0.5 bg-red-50 text-red-500">
+                            {t('semester_ended')}
+                        </span>
+                    )}
                 </div>
 
                 <button onClick={() => {
@@ -681,7 +795,13 @@ export default function StudyHubApp() {
         </div>
 
         <div className="absolute left-1/2 transform -translate-x-1/2 font-bold text-gray-700 text-sm hidden md:block">
-            {todayDateString}
+            <button 
+                onClick={() => setCurrentDate(new Date())}
+                className="hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                title="點擊回到今天"
+            >
+                {todayDateString}
+            </button>
         </div>
 
         <div className="flex items-center gap-4">
@@ -719,7 +839,6 @@ export default function StudyHubApp() {
                         <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={18}/></button>
                     </div>
                     <div className="space-y-4">
-                        {/* 語言設定 */}
                         <div>
                             <label className="text-xs font-bold text-gray-500 mb-1.5 block flex items-center gap-1"><Globe size={12}/> {t('language_settings')}</label>
                             <div className="flex gap-2">
@@ -783,7 +902,7 @@ export default function StudyHubApp() {
     );
   };
 
-  // --- Views (Content Area) ---
+  // --- Views ---
 
   const LinksView = ({ links, setLinks }) => {
       const [isAdding, setIsAdding] = useState(false);
@@ -862,13 +981,11 @@ export default function StudyHubApp() {
   };
 
   const AIChatView = ({ tasks, grades, timetable, currentDate, gpaCourses, periodTimes }) => {
-    // 翻譯支援：當語言切換時，重置歡迎訊息
     const [messages, setMessages] = useState([]);
     
     useEffect(() => {
-        // 初始化或語言切換時更新第一條訊息
         setMessages([{ role: 'assistant', content: t('ai_welcome') }]);
-    }, [language]); // 依賴 language
+    }, [language]); 
 
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -877,7 +994,6 @@ export default function StudyHubApp() {
     useEffect(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
 
     const getSystemContext = () => {
-        const weekDaysKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         const currentDayIndex = currentDate.getDay(); 
         const tableDayIndex = currentDayIndex === 0 ? 7 : currentDayIndex;
 
@@ -967,7 +1083,6 @@ export default function StudyHubApp() {
 
   const TimetableView = ({ timetable, setTimetable, periodTimes, setPeriodTimes }) => {
       const periods = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'A', 'B', 'C'];
-      // 依據語言動態生成星期
       const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(k => t(k));
       
       const [isEditing, setIsEditing] = useState(false);
@@ -1242,7 +1357,8 @@ export default function StudyHubApp() {
               const credit = parseFloat(c.credit); 
               let score = parseFloat(c.score);
               if (isNaN(score)) {
-                  const criteria = courseCriteria[c.name];
+                  // 如果課程沒有直接輸入分數，則嘗試從細項計算
+                  const criteria = courseCriteria[c.id]; // 改用 ID
                   if (criteria) {
                       let tempScore = 0;
                       criteria.forEach(item => {
@@ -1270,7 +1386,8 @@ export default function StudyHubApp() {
 
       const openCalculator = (course) => {
           setCalcModal({ isOpen: true, courseId: course.id, courseName: course.name });
-          setCurrentCriteria(courseCriteria[course.name] || []);
+          // 使用 ID 讀取，如果沒有，嘗試用 Name 讀取 (相容舊資料)
+          setCurrentCriteria(courseCriteria[course.id] || courseCriteria[course.name] || []);
       };
 
       const closeCalculator = () => {
@@ -1279,7 +1396,8 @@ export default function StudyHubApp() {
       };
 
       const addCriteriaItem = () => {
-          setCurrentCriteria([...currentCriteria, { id: Date.now(), name: '', weight: '', score: '' }]);
+          // 新增日期欄位，預設今天
+          setCurrentCriteria([...currentCriteria, { id: Date.now(), name: '', weight: '', score: '', date: getLocalDateString(new Date()) }]);
       };
 
       const updateCriteriaItem = (id, field, value) => {
@@ -1291,7 +1409,8 @@ export default function StudyHubApp() {
       };
 
       const saveCriteria = () => {
-          setCourseCriteria(prev => ({ ...prev, [calcModal.courseName]: currentCriteria }));
+          // 使用 ID 儲存
+          setCourseCriteria(prev => ({ ...prev, [calcModal.courseId]: currentCriteria }));
           
           let totalScore = 0;
           currentCriteria.forEach(c => {
@@ -1300,6 +1419,7 @@ export default function StudyHubApp() {
               totalScore += s * (w / 100);
           });
           
+          // 更新課程總分
           setGpaCourses(prev => prev.map(c => c.id === calcModal.courseId ? { ...c, score: totalScore.toFixed(0) } : c));
 
           closeCalculator();
@@ -1363,7 +1483,7 @@ export default function StudyHubApp() {
                             
                             <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 border border-gray-200 rounded-md py-1 focus:border-blue-500 outline-none" value={course.credit} onChange={e => updateGpaRow(course.id, 'credit', e.target.value)}/>
                             
-                            <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 border border-gray-200 rounded-md py-1 font-bold text-blue-600 focus:border-blue-500 outline-none" value={course.score} onChange={e => updateGpaRow(course.id, 'score', e.target.value)}/>
+                            <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 border border-gray-200 rounded-md py-1 font-bold text-blue-600 focus:border-blue-500 outline-none" value={course.score} onChange={e => updateGpaRow(course.id, 'score', e.target.value)} readOnly title="由細項計算"/>
                             
                             <div className="col-span-2 text-center text-sm font-mono text-gray-500">{scoreToPoint(course.score)}</div>
                             
@@ -1400,10 +1520,6 @@ export default function StudyHubApp() {
                                       <label className="text-xs font-bold text-gray-500 mb-1 block">{t('credit')}</label>
                                       <input className="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none focus:border-black text-center" placeholder="3" type="number" value={newCourse.credit} onChange={e => setNewCourse({...newCourse, credit: e.target.value})}/>
                                   </div>
-                                  <div className="flex-1">
-                                      <label className="text-xs font-bold text-gray-500 mb-1 block">{t('score')}</label>
-                                      <input className="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none focus:border-black text-center" placeholder="85" type="number" value={newCourse.score} onChange={e => setNewCourse({...newCourse, score: e.target.value})}/>
-                                  </div>
                               </div>
                               <div>
                                   <label className="text-xs font-bold text-gray-500 mb-1 block">{t('grade_note_optional')}</label>
@@ -1417,7 +1533,7 @@ export default function StudyHubApp() {
 
               {calcModal.isOpen && (
                   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
-                      <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl flex flex-col h-[500px]">
+                      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl flex flex-col h-[600px]">
                           <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
                               <div>
                                   <h3 className="font-bold text-lg text-gray-800">{calcModal.courseName}</h3>
@@ -1429,31 +1545,44 @@ export default function StudyHubApp() {
                           <div className="flex-1 overflow-y-auto mb-4 pr-1">
                               <div className="space-y-3">
                                   {currentCriteria.map((item, idx) => (
-                                      <div key={item.id} className="flex gap-2 items-center">
-                                          <input 
-                                              className="flex-1 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-500" 
-                                              placeholder={t('item_placeholder')}
-                                              value={item.name}
-                                              onChange={(e) => updateCriteriaItem(item.id, 'name', e.target.value)}
-                                          />
-                                          <div className="relative w-20">
+                                      <div key={item.id} className="flex flex-col gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                          <div className="flex gap-2">
                                               <input 
-                                                  className="w-full border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 pr-5" 
-                                                  placeholder={t('weight_placeholder')}
-                                                  type="number"
-                                                  value={item.weight}
-                                                  onChange={(e) => updateCriteriaItem(item.id, 'weight', e.target.value)}
+                                                  className="flex-1 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-500" 
+                                                  placeholder={t('item_placeholder')}
+                                                  value={item.name}
+                                                  onChange={(e) => updateCriteriaItem(item.id, 'name', e.target.value)}
                                               />
-                                              <span className="absolute right-2 top-2 text-xs text-gray-400">%</span>
+                                              <input 
+                                                  type="date"
+                                                  className="w-32 border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-blue-500 text-gray-600"
+                                                  value={item.date || getLocalDateString(new Date())}
+                                                  onChange={(e) => updateCriteriaItem(item.id, 'date', e.target.value)}
+                                              />
                                           </div>
-                                          <input 
-                                              className="w-20 border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 font-bold text-blue-600" 
-                                              placeholder={t('score_placeholder')}
-                                              type="number"
-                                              value={item.score}
-                                              onChange={(e) => updateCriteriaItem(item.id, 'score', e.target.value)}
-                                          />
-                                          <button onClick={() => removeCriteriaItem(item.id)} className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>
+                                          <div className="flex gap-2 items-center">
+                                              <div className="relative w-24">
+                                                  <input 
+                                                      className="w-full border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 pr-5" 
+                                                      placeholder={t('weight_placeholder')}
+                                                      type="number"
+                                                      value={item.weight}
+                                                      onChange={(e) => updateCriteriaItem(item.id, 'weight', e.target.value)}
+                                                  />
+                                                  <span className="absolute right-2 top-2 text-xs text-gray-400">%</span>
+                                              </div>
+                                              <span className="text-gray-400 text-xs">x</span>
+                                              <input 
+                                                  className="w-20 border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 font-bold text-blue-600" 
+                                                  placeholder={t('score_placeholder')}
+                                                  type="number"
+                                                  value={item.score}
+                                                  onChange={(e) => updateCriteriaItem(item.id, 'score', e.target.value)}
+                                              />
+                                              <span className="text-gray-400 text-xs">= {((parseFloat(item.score)||0) * (parseFloat(item.weight)||0)/100).toFixed(1)}</span>
+                                              <div className="flex-1"></div>
+                                              <button onClick={() => removeCriteriaItem(item.id)} className="text-gray-300 hover:text-red-500 bg-white p-1.5 rounded-lg border border-gray-200 hover:border-red-200"><Trash2 size={16}/></button>
+                                          </div>
                                       </div>
                                   ))}
                                   <button onClick={addCriteriaItem} className="w-full border border-dashed border-gray-300 py-2.5 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all">{t('add_criteria_item')}</button>
@@ -1480,257 +1609,414 @@ export default function StudyHubApp() {
       );
   };
 
-  const GradesView = ({ grades, setGrades, courseCriteria, setCourseCriteria }) => {
-    const [viewMode, setViewMode] = useState('all'); // all, subjects, calculator
-    const [selectedSubject, setSelectedSubject] = useState(null);
-    const [isAdding, setIsAdding] = useState(false);
-    const [newGradeEntry, setNewGradeEntry] = useState({ date: getLocalDateString(new Date()), subject: '', score: '', note: '' });
-    
-    // --- 成績計算機 State ---
-    const [isCalcOpen, setIsCalcOpen] = useState(false);
-    const [localCriteria, setLocalCriteria] = useState([]);
-    const [currentCalcSubject, setCurrentCalcSubject] = useState(null); // 用於計算機模式
+  // --- 改寫後的 GradesView ---
+  const GradesView = ({ gpaCourses, courseCriteria, currentDate, archivedSemesters, setArchivedSemesters }) => {
+    const [viewMode, setViewMode] = useState('weekly'); // weekly, subjects, history
+    const [selectedSubjectId, setSelectedSubjectId] = useState(null);
+    const [selectedHistorySemester, setSelectedHistorySemester] = useState(null);
 
-    const uniqueSubjects = useMemo(() => [...new Set(grades.map(g => g.subject))], [grades]);
-    const saveNewGrade = () => { if (!newGradeEntry.subject) return; setGrades([...grades, { id: Date.now(), ...newGradeEntry }]); setIsAdding(false); };
+    // --- 歷史紀錄評分細項管理 Modal State ---
+    const [historyCalcModal, setHistoryCalcModal] = useState({ isOpen: false, courseId: null, courseName: '' });
+    const [tempHistoryCriteria, setTempHistoryCriteria] = useState([]);
 
-    // --- 計算機相關函式 ---
-    const openCalculator = (subject) => {
-        setCurrentCalcSubject(subject);
-        setLocalCriteria(courseCriteria[subject] || []);
-        setIsCalcOpen(true);
-    };
+    // 取得本週日期範圍
+    const startOfWeek = useMemo(() => {
+        const d = new Date(currentDate);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(d.setDate(diff));
+        monday.setHours(0,0,0,0);
+        return monday;
+    }, [currentDate]);
 
-    const addCriteriaItem = () => {
-        setLocalCriteria([...localCriteria, { id: Date.now(), name: '', weight: '', score: '' }]);
-    };
+    const endOfWeek = useMemo(() => {
+        const d = new Date(startOfWeek);
+        d.setDate(d.getDate() + 6);
+        d.setHours(23,59,59,999);
+        return d;
+    }, [startOfWeek]);
 
-    const updateCriteriaItem = (id, field, value) => {
-        setLocalCriteria(localCriteria.map(c => c.id === id ? { ...c, [field]: value } : c));
-    };
+    // 扁平化所有細項並篩選本週
+    const weeklyRecords = useMemo(() => {
+        let allItems = [];
+        gpaCourses.forEach(course => {
+            const criteria = courseCriteria[course.id] || courseCriteria[course.name] || [];
+            criteria.forEach(item => {
+                if (item.date) {
+                    const itemDate = new Date(item.date);
+                    if (itemDate >= startOfWeek && itemDate <= endOfWeek) {
+                        allItems.push({ ...item, courseName: course.name });
+                    }
+                }
+            });
+        });
+        return allItems.sort((a,b) => new Date(b.date) - new Date(a.date));
+    }, [gpaCourses, courseCriteria, startOfWeek, endOfWeek]);
 
-    const removeCriteriaItem = (id) => {
-        setLocalCriteria(localCriteria.filter(c => c.id !== id));
-    };
+    // 歷史學期計算
+    const historyGPA = useMemo(() => {
+        if (!selectedHistorySemester) return "0.00";
+        const target = archivedSemesters.find(s => s.id === selectedHistorySemester);
+        if (!target) return "0.00";
+        
+        let totalPoints = 0; let totalCredits = 0;
+        target.courses.forEach(c => {
+            const credit = parseFloat(c.credit);
+            const score = parseFloat(c.score);
+            if (!isNaN(credit) && !isNaN(score)) {
+                totalPoints += scoreToPoint(score) * credit;
+                totalCredits += credit;
+            }
+        });
+        return totalCredits === 0 ? "0.00" : (totalPoints / totalCredits).toFixed(2);
+    }, [selectedHistorySemester, archivedSemesters]);
 
-    const saveCalculator = () => {
-        setCourseCriteria(prev => ({
-            ...prev,
-            [currentCalcSubject]: localCriteria
+    const updateArchivedCourse = (courseId, field, value) => {
+        if (!selectedHistorySemester) return;
+        setArchivedSemesters(prev => prev.map(semester => {
+            if (semester.id === selectedHistorySemester) {
+                return {
+                    ...semester,
+                    courses: semester.courses.map(c => c.id === courseId ? { ...c, [field]: value } : c)
+                };
+            }
+            return semester;
         }));
-        setIsCalcOpen(false);
     };
 
-    const currentTotalScore = useMemo(() => {
+    // --- 歷史紀錄評分細項邏輯 ---
+    const openHistoryCalculator = (course) => {
+        if (!selectedHistorySemester) return;
+        const semester = archivedSemesters.find(s => s.id === selectedHistorySemester);
+        if (!semester) return;
+
+        // 從 semester.criteria 中讀取該課程的細項
+        const criteria = semester.criteria ? (semester.criteria[course.id] || semester.criteria[course.name] || []) : [];
+        setTempHistoryCriteria(criteria);
+        setHistoryCalcModal({ isOpen: true, courseId: course.id, courseName: course.name });
+    };
+
+    const closeHistoryCalculator = () => {
+        setHistoryCalcModal({ isOpen: false, courseId: null, courseName: '' });
+        setTempHistoryCriteria([]);
+    };
+
+    const addHistoryCriteriaItem = () => {
+        setTempHistoryCriteria([...tempHistoryCriteria, { id: Date.now(), name: '', weight: '', score: '', date: getLocalDateString(new Date()) }]);
+    };
+
+    const updateHistoryCriteriaItem = (id, field, value) => {
+        setTempHistoryCriteria(tempHistoryCriteria.map(c => c.id === id ? { ...c, [field]: value } : c));
+    };
+
+    const removeHistoryCriteriaItem = (id) => {
+        setTempHistoryCriteria(tempHistoryCriteria.filter(c => c.id !== id));
+    };
+
+    const saveHistoryCriteria = () => {
+        if (!selectedHistorySemester) return;
+
+        // 計算新總分
+        let totalScore = 0;
+        tempHistoryCriteria.forEach(c => {
+            const w = parseFloat(c.weight) || 0;
+            const s = parseFloat(c.score) || 0;
+            totalScore += s * (w / 100);
+        });
+
+        // 更新 archivedSemesters
+        setArchivedSemesters(prev => prev.map(semester => {
+            if (semester.id === selectedHistorySemester) {
+                return {
+                    ...semester,
+                    // 更新 criteria
+                    criteria: {
+                        ...semester.criteria,
+                        [historyCalcModal.courseId]: tempHistoryCriteria
+                    },
+                    // 更新 courses 分數
+                    courses: semester.courses.map(c => c.id === historyCalcModal.courseId ? { ...c, score: totalScore.toFixed(0) } : c)
+                };
+            }
+            return semester;
+        }));
+
+        closeHistoryCalculator();
+    };
+
+    const tempHistoryTotalScore = useMemo(() => {
         let total = 0;
-        localCriteria.forEach(c => {
+        tempHistoryCriteria.forEach(c => {
             const w = parseFloat(c.weight) || 0;
             const s = parseFloat(c.score) || 0;
             total += s * (w / 100);
         });
         return total.toFixed(1);
-    }, [localCriteria]);
+    }, [tempHistoryCriteria]);
 
-    const currentTotalWeight = useMemo(() => {
+    const tempHistoryTotalWeight = useMemo(() => {
         let total = 0;
-        localCriteria.forEach(c => total += (parseFloat(c.weight) || 0));
+        tempHistoryCriteria.forEach(c => total += (parseFloat(c.weight) || 0));
         return total;
-    }, [localCriteria]);
+    }, [tempHistoryCriteria]);
+
 
     return (
       <div className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-6">
-            <div className="flex bg-gray-100 p-1 rounded-xl">
-                {['all:all_records', 'subjects:subject_categories', 'calculator:score_calculator'].map(m => {
+            <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto no-scrollbar">
+                {['weekly:all_records', 'subjects:subject_categories', 'history:gpa_history'].map(m => {
                     const [mode, label] = m.split(':');
                     return ( 
                         <button 
                             key={mode} 
-                            onClick={() => { setViewMode(mode); setSelectedSubject(null); }} 
-                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${viewMode === mode || (mode==='subjects' && viewMode==='subject-detail') ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                            onClick={() => { setViewMode(mode); setSelectedSubjectId(null); setSelectedHistorySemester(null); }} 
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${viewMode === mode || (mode==='subjects' && selectedSubjectId) || (mode==='history' && selectedHistorySemester) ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             {t(label)}
                         </button> 
                     )
                 })}
             </div>
-            {viewMode !== 'calculator' && (
-                <button onClick={()=>setIsAdding(true)} className="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 flex items-center gap-2 transition-colors"><Plus size={16} /> {t('add_grade')}</button>
-            )}
         </div>
         
         <div className="flex-1 overflow-y-auto pr-2">
-            {viewMode === 'all' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {grades.sort((a,b) => new Date(b.date) - new Date(a.date)).map(grade => (
-                        <div key={grade.id} className="bg-white border border-gray-200 shadow-sm rounded-xl p-5 hover:border-blue-300 transition-colors group relative">
-                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>
-                            </div>
-                            <div className="flex justify-between items-start mb-3">
+            {viewMode === 'weekly' && (
+                <div className="space-y-4">
+                    {weeklyRecords.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-48 text-gray-300 text-sm">
+                            <Calendar size={48} className="mb-2 opacity-20" />
+                            {t('no_criteria_records')}
+                        </div>
+                    ) : (
+                        weeklyRecords.map((item, idx) => (
+                            <div key={`${item.id}-${idx}`} className="bg-white border-l-4 border-blue-500 shadow-sm rounded-r-xl p-4 flex justify-between items-center">
                                 <div>
-                                    <h4 className="font-bold text-gray-800 text-lg">{grade.subject}</h4>
-                                    <p className="text-xs text-gray-400 mt-1">{grade.date}</p>
+                                    <h4 className="font-bold text-gray-800">{item.courseName}</h4>
+                                    <div className="flex gap-2 text-xs text-gray-500 mt-1">
+                                        <span className="bg-gray-100 px-1.5 rounded">{item.date}</span>
+                                        <span>{item.name}</span>
+                                    </div>
                                 </div>
-                                <div className="text-3xl font-black text-blue-600">{grade.score}</div>
-                            </div>
-                            <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">{grade.note || t('no_note')}</div>
-                        </div>
-                    ))}
-                </div>
-            )}
-            {viewMode === 'subjects' && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{uniqueSubjects.map(subject => (
-                    <div key={subject} onClick={() => { setSelectedSubject(subject); setViewMode('subject-detail'); }} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-blue-400 hover:shadow-md transition-all">
-                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4"><BookOpen size={24} /></div>
-                        <h4 className="font-bold text-gray-800 text-lg mb-1">{subject}</h4>
-                        <span className="text-xs font-bold text-gray-400">{t('records_count', {count: grades.filter(g=>g.subject===subject).length})}</span>
-                    </div>
-                ))}</div>
-            )}
-            
-            {/* 新增的計算機視圖模式 */}
-            {viewMode === 'calculator' && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {uniqueSubjects.map(subject => {
-                        // 計算目前的預估成績以顯示在卡片上
-                        const criteria = courseCriteria[subject] || [];
-                        let previewScore = 0;
-                        let hasCriteria = criteria.length > 0;
-                        if (hasCriteria) {
-                            criteria.forEach(c => {
-                                const w = parseFloat(c.weight) || 0;
-                                const s = parseFloat(c.score) || 0;
-                                previewScore += s * (w / 100);
-                            });
-                        }
-
-                        return (
-                            <div key={subject} onClick={() => openCalculator(subject)} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all group">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><PieChart size={24} /></div>
-                                    {hasCriteria && <span className="text-2xl font-black text-indigo-600">{previewScore.toFixed(0)}</span>}
+                                <div className="text-right">
+                                    <div className="text-2xl font-black text-gray-800">{item.score}</div>
+                                    <div className="text-[10px] text-gray-400">權重: {item.weight}%</div>
                                 </div>
-                                <h4 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1">{subject}</h4>
-                                <span className="text-xs font-bold text-gray-400 flex items-center gap-1 group-hover:text-indigo-500 transition-colors">
-                                    {t('click_to_calc')} <ChevronRight size={12}/>
-                                </span>
                             </div>
-                        );
-                    })}
-                    {uniqueSubjects.length === 0 && (
-                        <div className="col-span-full text-center py-12 text-gray-400 text-sm">
-                            {t('no_tasks')} (請先新增成績紀錄)
-                        </div>
+                        ))
                     )}
                 </div>
             )}
 
-            {viewMode === 'subject-detail' && selectedSubject && (
+            {viewMode === 'subjects' && !selectedSubjectId && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {gpaCourses.map(course => {
+                        const count = (courseCriteria[course.id] || courseCriteria[course.name] || []).length;
+                        return (
+                            <div key={course.id} onClick={() => setSelectedSubjectId(course.id)} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-blue-400 hover:shadow-md transition-all">
+                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4"><BookOpen size={24} /></div>
+                                <h4 className="font-bold text-gray-800 text-lg mb-1 line-clamp-1">{course.name}</h4>
+                                <span className="text-xs font-bold text-gray-400">{t('records_count', {count})}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {selectedSubjectId && (
                 <div className="space-y-4 max-w-2xl mx-auto">
                     <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
                         <div className="flex items-center gap-4">
-                            <button onClick={() => setViewMode('subjects')} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors"><ArrowLeft size={20} /></button>
-                            <h2 className="text-2xl font-bold text-gray-800">{selectedSubject}</h2>
+                            <button onClick={() => setSelectedSubjectId(null)} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors"><ArrowLeft size={20} /></button>
+                            <h2 className="text-2xl font-bold text-gray-800">
+                                {gpaCourses.find(c => c.id === selectedSubjectId)?.name}
+                            </h2>
                         </div>
                     </div>
 
-                    {grades.filter(g => g.subject === selectedSubject).map(grade => (
-                        <div key={grade.id} className="bg-white border-l-4 border-blue-500 shadow-sm rounded-r-xl p-5 flex justify-between items-center">
-                            <div><span className="text-xs text-gray-400 font-mono block mb-1">{grade.date}</span><span className="text-base font-bold text-gray-800">{grade.note}</span></div>
-                            <span className="text-2xl font-black text-gray-800">{grade.score}</span>
+                    {(courseCriteria[selectedSubjectId] || []).sort((a,b) => new Date(b.date) - new Date(a.date)).map(item => (
+                        <div key={item.id} className="bg-white border border-gray-100 shadow-sm rounded-xl p-4 flex justify-between items-center">
+                            <div>
+                                <span className="text-xs text-gray-400 font-mono block mb-1">{item.date}</span>
+                                <span className="text-base font-bold text-gray-800">{item.name}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">{item.weight}%</span>
+                                <span className="text-2xl font-black text-gray-800">{item.score}</span>
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
-        </div>
 
-        {isAdding && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
-                <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl">
-                    <div className="flex justify-between items-center mb-6"><span className="font-bold text-lg text-gray-800">{t('add_grade')}</span><button onClick={()=>setIsAdding(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button></div>
-                    <div className="space-y-4">
-                        <input type="date" value={newGradeEntry.date} onChange={e=>setNewGradeEntry({...newGradeEntry, date: e.target.value})} className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:border-black outline-none"/>
-                        <div className="flex gap-3">
-                            <input placeholder={t('subject_placeholder')} value={newGradeEntry.subject} onChange={e=>setNewGradeEntry({...newGradeEntry, subject: e.target.value})} className="flex-1 border border-gray-300 p-3 rounded-xl text-sm focus:border-black outline-none"/>
-                            <input placeholder={t('score_placeholder')} type="number" value={newGradeEntry.score} onChange={e=>setNewGradeEntry({...newGradeEntry, score: e.target.value})} className="w-24 border border-gray-300 p-3 rounded-xl text-sm focus:border-black outline-none text-center"/>
+            {viewMode === 'history' && !selectedHistorySemester && (
+                <div className="space-y-4">
+                    {archivedSemesters.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-48 text-gray-300 text-sm">
+                            <History size={48} className="mb-2 opacity-20" />
+                            {t('no_archived_data')}
                         </div>
-                        <input placeholder={t('grade_note_placeholder')} value={newGradeEntry.note} onChange={e=>setNewGradeEntry({...newGradeEntry, note: e.target.value})} className="w-full border border-gray-300 p-3 rounded-xl text-sm focus:border-black outline-none"/>
-                        <button onClick={saveNewGrade} className="w-full bg-black text-white py-3.5 rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors mt-2">{t('confirm')}</button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* 成績計算機 Modal */}
-        {isCalcOpen && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
-                <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl flex flex-col h-[500px]">
-                    <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
-                        <div>
-                            <h3 className="font-bold text-lg text-gray-800">{currentCalcSubject}</h3>
-                            <span className="text-xs text-gray-500">{t('score_calculator')}</span>
-                        </div>
-                        <button onClick={() => setIsCalcOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                    </div>
-                    
-                    <div className="flex-1 overflow-y-auto mb-4 pr-1">
-                        <div className="space-y-3">
-                            {localCriteria.map((item, idx) => (
-                                <div key={item.id} className="flex gap-2 items-center">
-                                    <input 
-                                        className="flex-1 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-500" 
-                                        placeholder={t('item_placeholder')}
-                                        value={item.name}
-                                        onChange={(e) => updateCriteriaItem(item.id, 'name', e.target.value)}
-                                    />
-                                    <div className="relative w-20">
-                                        <input 
-                                            className="w-full border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 pr-5" 
-                                            placeholder={t('weight_placeholder')}
-                                            type="number"
-                                            value={item.weight}
-                                            onChange={(e) => updateCriteriaItem(item.id, 'weight', e.target.value)}
-                                        />
-                                        <span className="absolute right-2 top-2 text-xs text-gray-400">%</span>
-                                    </div>
-                                    <input 
-                                        className="w-20 border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 font-bold text-blue-600" 
-                                        placeholder={t('score_placeholder')}
-                                        type="number"
-                                        value={item.score}
-                                        onChange={(e) => updateCriteriaItem(item.id, 'score', e.target.value)}
-                                    />
-                                    <button onClick={() => removeCriteriaItem(item.id)} className="text-gray-300 hover:text-red-500"><Trash2 size={16}/></button>
+                    ) : (
+                        archivedSemesters.map(semester => (
+                            <div key={semester.id} onClick={() => setSelectedHistorySemester(semester.id)} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all flex justify-between items-center">
+                                <div>
+                                    <h4 className="font-bold text-gray-800 text-lg mb-1">{semester.name}</h4>
+                                    <span className="text-xs text-gray-400">歸檔日: {new Date(semester.archivedDate).toLocaleDateString()}</span>
                                 </div>
-                            ))}
-                            <button onClick={addCriteriaItem} className="w-full border border-dashed border-gray-300 py-2.5 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all">{t('add_criteria_item')}</button>
+                                <div className="text-right">
+                                    <span className="text-xs font-bold text-indigo-500 block mb-1">GPA</span>
+                                    <span className="text-2xl font-black text-gray-800">
+                                        {(semester.courses.reduce((acc, curr) => {
+                                            const s = parseFloat(curr.score);
+                                            const c = parseFloat(curr.credit);
+                                            return (!isNaN(s) && !isNaN(c)) ? acc + scoreToPoint(s)*c : acc;
+                                        }, 0) / (semester.courses.reduce((acc, curr) => acc + (parseFloat(curr.credit)||0), 0) || 1)).toFixed(2)}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
+            {selectedHistorySemester && (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-4">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setSelectedHistorySemester(null)} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors"><ArrowLeft size={20} /></button>
+                            <h2 className="text-xl font-bold text-gray-800">
+                                {archivedSemesters.find(s => s.id === selectedHistorySemester)?.name}
+                            </h2>
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-100 pt-4 mt-auto">
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="text-xs text-gray-500">
-                                {t('total_weight')}: <span className={currentTotalWeight !== 100 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{currentTotalWeight}%</span>
-                                {currentTotalWeight !== 100 && ` ${t('not_100')}`}
-                            </div>
-                            <div className="text-right">
-                                <span className="text-xs text-gray-500 block">{t('estimated_score')}</span>
-                                <span className="text-3xl font-black text-blue-600">{currentTotalScore}</span>
-                            </div>
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
+                        <div>
+                            <p className="text-indigo-100 text-xs font-bold tracking-wider uppercase mb-1">歷史 GPA</p>
+                            <h2 className="text-5xl font-black tracking-tighter">{historyGPA}</h2>
                         </div>
-                        <button onClick={saveCalculator} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">
-                            <Save size={16}/> {t('save_criteria')}
-                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="grid grid-cols-12 bg-gray-50 text-xs font-bold text-gray-500 p-3 border-b border-gray-200 uppercase tracking-wide">
+                            <div className="col-span-6 pl-2">{t('course_name')}</div>
+                            <div className="col-span-2 text-center">{t('credit')}</div>
+                            <div className="col-span-2 text-center">{t('score')}</div>
+                            <div className="col-span-2 text-center">{t('action')}</div>
+                        </div>
+                        {archivedSemesters.find(s => s.id === selectedHistorySemester)?.courses.map((course, idx) => (
+                            <div key={course.id || idx} className="grid grid-cols-12 p-3 border-b border-gray-100 items-center gap-2 hover:bg-gray-50 transition-colors">
+                                <div className="col-span-6 font-medium text-sm text-gray-800 pl-2">
+                                    {course.name}
+                                </div>
+                                <input 
+                                    type="number" 
+                                    className="col-span-2 text-center text-sm bg-gray-50 border border-gray-200 rounded-md py-1 focus:border-indigo-500 outline-none"
+                                    value={course.credit}
+                                    onChange={(e) => updateArchivedCourse(course.id, 'credit', e.target.value)}
+                                />
+                                <input 
+                                    type="number" 
+                                    className="col-span-2 text-center text-sm bg-gray-50 border border-gray-200 rounded-md py-1 font-bold text-indigo-600 focus:border-indigo-500 outline-none"
+                                    value={course.score}
+                                    onChange={(e) => updateArchivedCourse(course.id, 'score', e.target.value)}
+                                    readOnly // 設為唯讀，強制透過細項修改
+                                    title="請點擊右側按鈕管理細項以修改分數"
+                                />
+                                <div className="col-span-2 flex justify-center">
+                                    <button 
+                                        onClick={() => openHistoryCalculator(course)}
+                                        className="text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded-md transition-all"
+                                        title={t('calc_semester_score')}
+                                    >
+                                        <PieChart size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
-        )}
+            )}
+
+            {/* 歷史紀錄成績計算 Modal */}
+            {historyCalcModal.isOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl flex flex-col h-[600px]">
+                        <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                            <div>
+                                <h3 className="font-bold text-lg text-gray-800">{historyCalcModal.courseName}</h3>
+                                <span className="text-xs text-gray-500">{t('score_calculator')} (歷史紀錄)</span>
+                            </div>
+                            <button onClick={closeHistoryCalculator} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto mb-4 pr-1">
+                            <div className="space-y-3">
+                                {tempHistoryCriteria.map((item, idx) => (
+                                    <div key={item.id} className="flex flex-col gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div className="flex gap-2">
+                                            <input 
+                                                className="flex-1 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-blue-500" 
+                                                placeholder={t('item_placeholder')}
+                                                value={item.name}
+                                                onChange={(e) => updateHistoryCriteriaItem(item.id, 'name', e.target.value)}
+                                            />
+                                            <input 
+                                                type="date"
+                                                className="w-32 border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-blue-500 text-gray-600"
+                                                value={item.date || getLocalDateString(new Date())}
+                                                onChange={(e) => updateHistoryCriteriaItem(item.id, 'date', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 items-center">
+                                            <div className="relative w-24">
+                                                <input 
+                                                    className="w-full border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 pr-5" 
+                                                    placeholder={t('weight_placeholder')}
+                                                    type="number"
+                                                    value={item.weight}
+                                                    onChange={(e) => updateHistoryCriteriaItem(item.id, 'weight', e.target.value)}
+                                                />
+                                                <span className="absolute right-2 top-2 text-xs text-gray-400">%</span>
+                                            </div>
+                                            <span className="text-gray-400 text-xs">x</span>
+                                            <input 
+                                                className="w-20 border border-gray-200 rounded-lg p-2 text-sm text-center outline-none focus:border-blue-500 font-bold text-blue-600" 
+                                                placeholder={t('score_placeholder')}
+                                                type="number"
+                                                value={item.score}
+                                                onChange={(e) => updateHistoryCriteriaItem(item.id, 'score', e.target.value)}
+                                            />
+                                            <span className="text-gray-400 text-xs">= {((parseFloat(item.score)||0) * (parseFloat(item.weight)||0)/100).toFixed(1)}</span>
+                                            <div className="flex-1"></div>
+                                            <button onClick={() => removeHistoryCriteriaItem(item.id)} className="text-gray-300 hover:text-red-500 bg-white p-1.5 rounded-lg border border-gray-200 hover:border-red-200"><Trash2 size={16}/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button onClick={addHistoryCriteriaItem} className="w-full border border-dashed border-gray-300 py-2.5 rounded-lg text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 transition-all">{t('add_criteria_item')}</button>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-gray-100 pt-4 mt-auto">
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="text-xs text-gray-500">
+                                    {t('total_weight')}: <span className={tempHistoryTotalWeight !== 100 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'}>{tempHistoryTotalWeight}%</span>
+                                    {tempHistoryTotalWeight !== 100 && ` ${t('not_100')}`}
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs text-gray-500 block">{t('estimated_score')}</span>
+                                    <span className="text-3xl font-black text-blue-600">{tempHistoryTotalScore}</span>
+                                </div>
+                            </div>
+                            <button onClick={saveHistoryCriteria} className="w-full bg-black text-white py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors">{t('save_and_apply')}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
       </div>
     );
   };
-
-  // --- Missing Components Restoration: DashboardView & PlannerView ---
 
   const DashboardView = ({ tasks, currentDate, setCurrentDate }) => (
       <div className="h-full flex flex-col md:flex-row gap-8">
@@ -1869,7 +2155,7 @@ export default function StudyHubApp() {
                 <>
                   {activeTab === 'dashboard' && <DashboardView tasks={tasks} currentDate={currentDate} setCurrentDate={setCurrentDate} />}
                   {activeTab === 'planner' && <PlannerView tasks={tasks} setTasks={setTasks} weekDays={weekDays} />}
-                  {activeTab === 'grades' && <GradesView grades={grades} setGrades={setGrades} courseCriteria={courseCriteria} setCourseCriteria={setCourseCriteria} />}
+                  {activeTab === 'grades' && <GradesView gpaCourses={gpaCourses} courseCriteria={courseCriteria} currentDate={currentDate} archivedSemesters={archivedSemesters} setArchivedSemesters={setArchivedSemesters} />}
                   {activeTab === 'gpa' && <GpaView gpaCourses={gpaCourses} setGpaCourses={setGpaCourses} courseCriteria={courseCriteria} setCourseCriteria={setCourseCriteria} />}
                   {activeTab === 'timetable' && <TimetableView timetable={timetable} setTimetable={setTimetable} periodTimes={periodTimes} setPeriodTimes={setPeriodTimes} />}
                   {activeTab === 'pomodoro' && <PomodoroView studyLogs={studyLogs} setStudyLogs={setStudyLogs} currentDate={currentDate} pomodoroSubjects={pomodoroSubjects} setPomodoroSubjects={setPomodoroSubjects} />}
