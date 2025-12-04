@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Check, Edit2, RotateCw, X, BookOpen, ArrowLeft, Sparkles, Clock, Calendar, Calculator, Trash2, Send, Link as LinkIcon, ExternalLink, BarChart2, Cloud, Settings, PieChart, Globe, Save, AlertCircle, History, Archive, Moon, Sun, Upload, Download, Key, Bot } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Check, Edit2, RotateCw, X, BookOpen, ArrowLeft, Sparkles, Clock, Calendar, Calculator, Trash2, Send, Link as LinkIcon, ExternalLink, BarChart2, Cloud, Settings, PieChart, Globe, Save, AlertCircle, History, Archive, Moon, Sun, Upload, Download, Key, Bot, Menu } from 'lucide-react';
 
 // --- 多語言翻譯字典 ---
 const TRANSLATIONS = {
@@ -515,6 +515,18 @@ const getSemesterName = (date) => {
     }
 };
 
+// 定義導航項目，供 Sidebar 和 MobileNav 使用
+const NAV_ITEMS = [
+    { id: 'timetable', labelKey: 'timetable', icon: RotateCw },
+    { id: 'planner', labelKey: 'planner', icon: BookOpen },
+    { id: 'gpa', labelKey: 'gpa', icon: Calculator },
+    { id: 'grades', labelKey: 'grades', icon: Edit2 },
+    { id: 'dashboard', labelKey: 'dashboard', icon: Calendar },
+    { id: 'ai', labelKey: 'ai_assistant', icon: Sparkles, special: true },
+    { id: 'pomodoro', labelKey: 'pomodoro', icon: Clock },
+    { id: 'links', labelKey: 'links', icon: LinkIcon },
+];
+
 export default function StudyHubApp() {
   const [activeTab, setActiveTab] = useState('timetable'); 
   const [currentDate, setCurrentDate] = useState(new Date()); 
@@ -760,7 +772,7 @@ export default function StudyHubApp() {
   // --- 新版網頁介面元件 ---
 
   const Sidebar = () => (
-    <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col transition-all duration-300 z-20">
+    <aside className="hidden md:flex w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex-col transition-all duration-300 z-20">
       <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800">
         <h1 className="text-xl font-black text-gray-800 dark:text-gray-100 flex items-center gap-2 tracking-tight">
           <div className="w-8 h-8 bg-black dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center">
@@ -771,16 +783,7 @@ export default function StudyHubApp() {
       </div>
       
       <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-        {[
-            { id: 'timetable', label: t('timetable'), icon: <RotateCw size={18}/> },
-            { id: 'planner', label: t('planner'), icon: <BookOpen size={18}/> },
-            { id: 'gpa', label: t('gpa'), icon: <Calculator size={18}/> },
-            { id: 'grades', label: t('grades'), icon: <Edit2 size={18}/> }, // 調整順序
-            { id: 'dashboard', label: t('dashboard'), icon: <Calendar size={18}/> },
-            { id: 'ai', label: t('ai_assistant'), icon: <Sparkles size={18}/>, special: true },
-            { id: 'pomodoro', label: t('pomodoro'), icon: <Clock size={18}/> },
-            { id: 'links', label: t('links'), icon: <LinkIcon size={18}/> },
-        ].map(item => (
+        {NAV_ITEMS.map(item => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
@@ -791,8 +794,8 @@ export default function StudyHubApp() {
                 : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200'}
             `}
           >
-            {item.icon}
-            <span>{item.label}</span>
+            <item.icon size={18} />
+            <span>{t(item.labelKey)}</span>
             {item.special && <span className="ml-auto text-[10px] bg-white/20 px-1.5 py-0.5 rounded text-white">BETA</span>}
           </button>
         ))}
@@ -810,6 +813,23 @@ export default function StudyHubApp() {
         </div>
       </div>
     </aside>
+  );
+
+  const MobileNav = () => (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex justify-between px-2 py-2 z-50 safe-area-pb overflow-x-auto no-scrollbar">
+        {NAV_ITEMS.map(item => (
+            <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex flex-col items-center justify-center min-w-[64px] p-2 rounded-xl transition-all ${activeTab === item.id ? 'text-black dark:text-white' : 'text-gray-400 dark:text-gray-600'}`}
+            >
+                <item.icon size={20} className={activeTab === item.id && item.special ? 'text-indigo-600 dark:text-indigo-400' : ''} />
+                <span className={`text-[10px] mt-1 font-bold truncate max-w-[60px] ${activeTab === item.id ? 'opacity-100' : 'opacity-70'}`}>
+                    {t(item.labelKey)}
+                </span>
+            </button>
+        ))}
+    </div>
   );
 
   const TopBar = () => {
@@ -892,7 +912,7 @@ export default function StudyHubApp() {
     }).format(new Date());
 
     return (
-        <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 flex-shrink-0 z-10 sticky top-0 transition-colors">
+        <header className="h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-10 sticky top-0 transition-colors">
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
                 <button onClick={() => {
@@ -956,7 +976,7 @@ export default function StudyHubApp() {
             </div>
         </div>
 
-        <div className="absolute left-1/2 transform -translate-x-1/2 font-bold text-gray-700 dark:text-gray-200 text-sm hidden md:block">
+        <div className="absolute left-1/2 transform -translate-x-1/2 font-bold text-gray-700 dark:text-gray-200 text-sm hidden lg:block">
             <button 
                 onClick={() => setCurrentDate(new Date())}
                 className="hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
@@ -966,7 +986,7 @@ export default function StudyHubApp() {
             </button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
             {/* 主題切換按鈕 */}
             <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -988,7 +1008,7 @@ export default function StudyHubApp() {
                 <Settings size={20} />
             </button>
 
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border
+            <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border
                 ${saveStatus === 'saving' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800' : 
                 saveStatus === 'saved' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-100 dark:border-green-800' : 
                 saveStatus === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-100 dark:border-gray-700'}`}>
@@ -1132,15 +1152,15 @@ export default function StudyHubApp() {
 
       return (
           <div className="h-full">
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {links.map(link => (
-                      <div key={link.id} className="relative group h-40">
+                      <div key={link.id} className="relative group h-32 md:h-40">
                           <button 
                               onClick={(e) => {
                                   e.stopPropagation();
                                   confirmDelete(link.id, link.title);
                               }}
-                              className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                              className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 dark:bg-gray-800/90 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100"
                           >
                               <X size={14} />
                           </button>
@@ -1149,13 +1169,13 @@ export default function StudyHubApp() {
                               href={link.url} 
                               target="_blank" 
                               rel="noopener noreferrer" 
-                              className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-3 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer no-underline text-gray-700 dark:text-gray-200 h-full"
+                              className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-2 md:gap-3 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer no-underline text-gray-700 dark:text-gray-200 h-full"
                           >
-                              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
-                                  <LinkIcon size={24} />
+                              <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
+                                  <LinkIcon size={20} className="md:w-6 md:h-6" />
                               </div>
-                              <span className="font-bold text-sm text-center line-clamp-1 w-full px-1">{link.title}</span>
-                              <div className="flex items-center text-[10px] text-gray-400 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="font-bold text-xs md:text-sm text-center line-clamp-1 w-full px-1">{link.title}</span>
+                              <div className="flex items-center text-[10px] text-gray-400 gap-1 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
                                   <span>{t('open_link')}</span> <ExternalLink size={10} />
                               </div>
                           </a>
@@ -1164,7 +1184,7 @@ export default function StudyHubApp() {
                   
                   <button 
                     onClick={() => setIsAdding(true)}
-                    className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all h-40"
+                    className="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all h-32 md:h-40"
                   >
                       <Plus size={24} />
                       <span className="text-xs font-bold">{t('add_link')}</span>
@@ -1343,7 +1363,7 @@ Keep your response concise and helpful.`;
             {/* API Key 設定區 */}
             {!apiKey ? (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-col md:flex-row">
                         <div className="relative flex-1">
                             <Key className="absolute left-3 top-2.5 text-gray-400" size={16} />
                             <input 
@@ -1356,7 +1376,7 @@ Keep your response concise and helpful.`;
                         </div>
                         <button 
                             onClick={() => handleSaveApiKey(tempKey)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors w-full md:w-auto"
                         >
                             {t('ai_key_save')}
                         </button>
@@ -1371,23 +1391,23 @@ Keep your response concise and helpful.`;
                 <div className="p-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center px-4">
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <Bot size={14} />
-                        <span className="font-bold">{t('ai_model_select')}</span>
+                        <span className="font-bold hidden md:inline">{t('ai_model_select')}</span>
                         <select 
                             value={aiModel} 
                             onChange={handleModelChange}
-                            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs outline-none focus:border-blue-500 text-gray-700 dark:text-gray-200 cursor-pointer"
+                            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs outline-none focus:border-blue-500 text-gray-700 dark:text-gray-200 cursor-pointer max-w-[150px] truncate"
                         >
                             <option value="gemini-2.5-pro">Gemini 2.5 Pro (推薦)</option>
                             <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                             <option value="gemini-flash-latest">Gemini Flash Latest</option>
                         </select>
                     </div>
-                    <button onClick={() => { setApiKey(''); localStorage.removeItem('google_ai_key'); }} className="text-xs text-red-400 hover:text-red-600 underline">重設 Key</button>
+                    <button onClick={() => { setApiKey(''); localStorage.removeItem('google_ai_key'); }} className="text-xs text-red-400 hover:text-red-600 underline">Key</button>
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {messages.map((msg, idx) => ( <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[70%] rounded-2xl p-4 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user' ? 'bg-black dark:bg-gray-100 text-white dark:text-gray-900 rounded-br-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 rounded-bl-none'}`}>{msg.content}</div></div> ))}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+                {messages.map((msg, idx) => ( <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] md:max-w-[70%] rounded-2xl p-3 md:p-4 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${msg.role === 'user' ? 'bg-black dark:bg-gray-100 text-white dark:text-gray-900 rounded-br-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-600 rounded-bl-none'}`}>{msg.content}</div></div> ))}
                 {isSending && <div className="text-gray-400 text-xs ml-4 animate-pulse">{t('ai_thinking')}</div>}
                 <div ref={messagesEndRef} />
             </div>
@@ -1508,7 +1528,7 @@ Keep your response concise and helpful.`;
                 </div>
               </div>
               
-              <div className="mt-4 flex justify-end gap-3">
+              <div className="mt-4 flex justify-end gap-3 flex-wrap">
                   {isEditing && (
                     <button 
                         onClick={handleClearTimetable} 
@@ -1643,8 +1663,8 @@ Keep your response concise and helpful.`;
       const maxSubjectHours = Math.max(...subjectStats.map(s => parseFloat(s.hours)), 1);
 
       return (
-          <div className="h-full flex flex-col md:flex-row gap-8">
-              <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="h-full flex flex-col md:flex-row gap-8 overflow-y-auto">
+              <div className="flex-1 flex flex-col items-center justify-center space-y-8 bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700 min-h-[500px]">
                   <div className="flex bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full">
                       <button onClick={() => switchMode('work')} className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all ${mode === 'work' ? 'bg-white dark:bg-gray-600 shadow text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-300'}`}>{t('focus_mode')}</button>
                       <button onClick={() => switchMode('break')} className={`px-8 py-2.5 rounded-full text-sm font-bold transition-all ${mode === 'break' ? 'bg-white dark:bg-gray-600 shadow text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-300'}`}>{t('break_mode')}</button>
@@ -1668,8 +1688,8 @@ Keep your response concise and helpful.`;
                       </div>
                   )}
 
-                  <div className={`w-72 h-72 rounded-full border-[12px] flex items-center justify-center shadow-xl transition-all duration-500 ${mode === 'work' ? 'border-red-50 dark:border-red-900/20 bg-white dark:bg-gray-800' : 'border-green-50 dark:border-green-900/20 bg-white dark:bg-gray-800'}`}>
-                      <span className={`text-7xl font-mono font-bold tracking-tighter ${mode === 'work' ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>{formatTime(timeLeft)}</span>
+                  <div className={`w-64 h-64 md:w-72 md:h-72 rounded-full border-[12px] flex items-center justify-center shadow-xl transition-all duration-500 ${mode === 'work' ? 'border-red-50 dark:border-red-900/20 bg-white dark:bg-gray-800' : 'border-green-50 dark:border-green-900/20 bg-white dark:bg-gray-800'}`}>
+                      <span className={`text-6xl md:text-7xl font-mono font-bold tracking-tighter ${mode === 'work' ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>{formatTime(timeLeft)}</span>
                   </div>
 
                   <div className="flex gap-6">
@@ -1678,7 +1698,7 @@ Keep your response concise and helpful.`;
                   </div>
               </div>
 
-              <div className="w-full md:w-80 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col">
+              <div className="w-full md:w-80 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col min-h-[300px]">
                   <div className="flex items-center justify-between mb-6">
                       <h3 className="font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><BarChart2 size={20} className="text-blue-500"/> {t('weekly_stats')}</h3>
                       <span className="text-xs text-gray-400 dark:text-gray-500 font-mono bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded">{t('unit_hours')}</span>
@@ -1815,51 +1835,56 @@ Keep your response concise and helpful.`;
 
       return (
           <div className="h-full flex flex-col space-y-6">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white shadow-lg flex items-center justify-between">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 md:p-8 text-white shadow-lg flex items-center justify-between">
                   <div>
                       <p className="text-blue-100 text-sm font-bold tracking-wider uppercase mb-1">{t('current_gpa')}</p>
-                      <h2 className="text-6xl font-black tracking-tighter">{calculatedGPA}</h2>
+                      <h2 className="text-5xl md:text-6xl font-black tracking-tighter">{calculatedGPA}</h2>
                   </div>
                   <div className="text-right">
-                      <div className="text-3xl font-bold opacity-90">{gpaCourses.length}</div>
+                      <div className="text-2xl md:text-3xl font-bold opacity-90">{gpaCourses.length}</div>
                       <div className="text-xs text-blue-200">{t('total_courses')}</div>
                   </div>
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex-1 flex flex-col overflow-hidden">
-                  <div className="grid grid-cols-12 bg-gray-50 dark:bg-gray-900 text-xs font-bold text-gray-500 dark:text-gray-400 p-3 border-b border-gray-200 dark:border-gray-700 uppercase tracking-wide">
-                      <div className="col-span-4 pl-2">{t('course_name')}</div>
-                      <div className="col-span-2 text-center">{t('credit')}</div>
-                      <div className="col-span-2 text-center">{t('score')}</div>
-                      <div className="col-span-2 text-center">{t('gpa_score')}</div>
-                      <div className="col-span-2 text-center">{t('action')}</div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto">
-                    {gpaCourses.map(course => (
-                        <div key={course.id} className="grid grid-cols-12 p-3 border-b border-gray-100 dark:border-gray-700 items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
-                            <div className="col-span-4 flex items-center gap-2">
-                                <input placeholder={t('course_name_placeholder')} className="w-full text-sm font-medium text-gray-800 dark:text-gray-100 border-none bg-transparent outline-none focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-600" value={course.name} onChange={e => updateGpaRow(course.id, 'name', e.target.value)}/>
-                            </div>
-                            
-                            <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md py-1 focus:border-blue-500 dark:focus:border-blue-400 outline-none text-gray-900 dark:text-gray-100" value={course.credit} onChange={e => updateGpaRow(course.id, 'credit', e.target.value)}/>
-                            
-                            <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md py-1 font-bold text-blue-600 dark:text-blue-400 focus:border-blue-500 dark:focus:border-blue-400 outline-none" value={course.score} onChange={e => updateGpaRow(course.id, 'score', e.target.value)} readOnly title="由細項計算"/>
-                            
-                            <div className="col-span-2 text-center text-sm font-mono text-gray-500 dark:text-gray-400">{scoreToPoint(course.score)}</div>
-                            
-                            <div className="col-span-2 flex justify-center gap-1">
-                                <button 
-                                    onClick={() => openCalculator(course)}
-                                    className="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-all"
-                                    title={t('calc_semester_score')}
-                                >
-                                    <PieChart size={16} />
-                                </button>
-                                <button onClick={() => removeGpaRow(course.id)} className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-all opacity-0 group-hover:opacity-100"><Trash2 size={16} /></button>
-                            </div>
+                  {/* 使用 min-w 確保表格在手機上可左右滑動而不變形 */}
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[500px]">
+                        <div className="grid grid-cols-12 bg-gray-50 dark:bg-gray-900 text-xs font-bold text-gray-500 dark:text-gray-400 p-3 border-b border-gray-200 dark:border-gray-700 uppercase tracking-wide">
+                            <div className="col-span-4 pl-2">{t('course_name')}</div>
+                            <div className="col-span-2 text-center">{t('credit')}</div>
+                            <div className="col-span-2 text-center">{t('score')}</div>
+                            <div className="col-span-2 text-center">{t('gpa_score')}</div>
+                            <div className="col-span-2 text-center">{t('action')}</div>
                         </div>
-                    ))}
+                        
+                        <div className="flex-1 overflow-y-auto max-h-[400px]">
+                            {gpaCourses.map(course => (
+                                <div key={course.id} className="grid grid-cols-12 p-3 border-b border-gray-100 dark:border-gray-700 items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group">
+                                    <div className="col-span-4 flex items-center gap-2">
+                                        <input placeholder={t('course_name_placeholder')} className="w-full text-sm font-medium text-gray-800 dark:text-gray-100 border-none bg-transparent outline-none focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-600" value={course.name} onChange={e => updateGpaRow(course.id, 'name', e.target.value)}/>
+                                    </div>
+                                    
+                                    <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md py-1 focus:border-blue-500 dark:focus:border-blue-400 outline-none text-gray-900 dark:text-gray-100" value={course.credit} onChange={e => updateGpaRow(course.id, 'credit', e.target.value)}/>
+                                    
+                                    <input placeholder="-" type="number" className="col-span-2 text-center text-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-md py-1 font-bold text-blue-600 dark:text-blue-400 focus:border-blue-500 dark:focus:border-blue-400 outline-none" value={course.score} onChange={e => updateGpaRow(course.id, 'score', e.target.value)} readOnly title="由細項計算"/>
+                                    
+                                    <div className="col-span-2 text-center text-sm font-mono text-gray-500 dark:text-gray-400">{scoreToPoint(course.score)}</div>
+                                    
+                                    <div className="col-span-2 flex justify-center gap-1">
+                                        <button 
+                                            onClick={() => openCalculator(course)}
+                                            className="text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-all"
+                                            title={t('calc_semester_score')}
+                                        >
+                                            <PieChart size={16} />
+                                        </button>
+                                        <button onClick={() => removeGpaRow(course.id)} className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-all md:opacity-0 md:group-hover:opacity-100"><Trash2 size={16} /></button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                   </div>
                   
                   <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
@@ -2125,7 +2150,7 @@ Keep your response concise and helpful.`;
     return (
       <div className="h-full flex flex-col">
         <div className="flex justify-between items-center mb-6">
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl overflow-x-auto no-scrollbar">
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl overflow-x-auto no-scrollbar max-w-full">
                 {['weekly:all_records', 'subjects:subject_categories', 'history:gpa_history'].map(m => {
                     const [mode, label] = m.split(':');
                     return ( 
@@ -2576,7 +2601,7 @@ Keep your response concise and helpful.`;
                                         e.stopPropagation();
                                         handleDelete(task.id, task.subject);
                                     }}
-                                    className="absolute top-1 right-1 text-gray-300 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+                                    className="absolute top-1 right-1 text-gray-300 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors hidden group-hover:block"
                                 >
                                     <Trash2 size={14} />
                                 </button>
@@ -2607,9 +2632,9 @@ Keep your response concise and helpful.`;
   return (
     <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-950 font-sans overflow-hidden transition-colors duration-300">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 mb-20 md:mb-0 transition-all duration-300">
         <TopBar />
-        <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth">
           <div className="max-w-6xl mx-auto h-full flex flex-col">
              {!isDataLoaded ? (
                 <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 animate-pulse flex-col gap-2">
@@ -2631,6 +2656,7 @@ Keep your response concise and helpful.`;
           </div>
         </div>
       </main>
+      <MobileNav />
     </div>
   );
 }
