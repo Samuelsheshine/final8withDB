@@ -1192,7 +1192,16 @@ export default function StudyHubApp() {
     const [messages, setMessages] = useState([]);
     const [tempKey, setTempKey] = useState(apiKey || '');
     const [aiModel, setAiModel] = useState(() => {
-        return localStorage.getItem('google_ai_model') || 'gemini-1.5-flash';
+        // Check the stored model against a list of supported models. If the stored value
+        // is not in the supported list (or absent), fall back to the default model.
+        const stored = localStorage.getItem('google_ai_model');
+        const supported = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-flash-latest'];
+        if (stored && supported.includes(stored)) {
+            return stored;
+        }
+        // Reset to default and update localStorage when an unsupported value is found.
+        localStorage.setItem('google_ai_model', 'gemini-2.5-pro');
+        return 'gemini-2.5-pro';
     });
 
     const handleModelChange = (e) => {
@@ -1270,20 +1279,28 @@ Keep your response concise and helpful.`;
 
         try {
             const systemContext = getSystemContext();
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${aiModel}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [{ text: systemContext + "\n\nUser Question: " + content }]
-                        }
-                    ]
-                })
-            });
+            const response = await fetch(
+  `https://generativelanguage.googleapis.com/v1/models/${aiModel}:generateContent?key=${apiKey}`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: systemContext + "\n\nUser Question: " + content,
+            },
+          ],
+        },
+      ],
+    }),
+  }
+);
+
 
             // 嘗試解析 JSON，無論狀態碼為何
             const data = await response.json();
@@ -1360,9 +1377,9 @@ Keep your response concise and helpful.`;
                             onChange={handleModelChange}
                             className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs outline-none focus:border-blue-500 text-gray-700 dark:text-gray-200 cursor-pointer"
                         >
-                            <option value="gemini-1.5-flash">Gemini 1.5 Flash (推薦)</option>
-                            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                            <option value="gemini-pro">Gemini 1.0 Pro</option>
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (推薦)</option>
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                            <option value="gemini-flash-latest">Gemini Flash Latest</option>
                         </select>
                     </div>
                     <button onClick={() => { setApiKey(''); localStorage.removeItem('google_ai_key'); }} className="text-xs text-red-400 hover:text-red-600 underline">重設 Key</button>
