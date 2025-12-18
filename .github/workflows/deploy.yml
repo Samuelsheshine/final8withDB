@@ -1,0 +1,19 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [ main ] # 如果你的分支叫 master 請改為 master
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and Build
+        run: |
+          cd client
+          npm install
+          npm run build
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: client/dist # Vite 編譯後的資料夾
+          branch: gh-pages
